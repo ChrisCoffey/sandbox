@@ -31,6 +31,16 @@ object Euler {
     fib(0, 1)
   }
 
+  private val φ = (1 + Math.sqrt(5))/2
+  def nthFibonaci(n: Long): Long = {
+    val sqrt5 = Math.sqrt(5)
+    Math.round(Math.pow(φ , n)/ sqrt5)
+  }
+
+  def fibLength(n: Long): Int = {
+    (n * Math.log10(φ) - Math.log10(5)/2 + 1).toInt
+  }
+
   def forAll[T](s: Stream[T])(p: T => Boolean): Boolean = {
     s match{
       case h #:: t => if(p(h)) forAll(t)(p) else false
@@ -111,12 +121,6 @@ object Euler {
     } yield List(a, b)
   }
 
-  def lexicalPermutation[T](ls: List[T]): List[List[T]] = {
-    for{
-      i <- ls.indices
-      a <- ls
-    }
-  }
 
   object One_Twenty{
 
@@ -396,7 +400,11 @@ object Euler {
     }
 
     def problem24 = {
+      (0 to 9).map(_.toString).permutations.drop(999999).next()
+    }
 
+    def problem25 = {
+      fibLength(4782)
     }
 
 
