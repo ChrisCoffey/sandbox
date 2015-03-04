@@ -54,21 +54,19 @@ object Euler {
     else if ((i & 1) == 0) false // efficient div by 2
     else prime(i)
 
-  def primes: Stream[Long] = 2 #:: prime3
+  lazy val primes: Stream[Long] = 2 #:: Stream.from(3).filter(i =>
+    primes.takeWhile(j => j * j <= i).forall(i % _ > 0)).map(_.toLong)
 
-  // performance: avoid redundant divide by two, so this starts at 3
-  private val prime3: Stream[Long] = {
-    def next(i: Long): Stream[Long] =
-      if (prime(i))
-        i #:: next(i + 2)
-      else
-        next(i + 2) // tail
-    3 #:: next(5)
-  }
+  def isPrime(n: Long) = primes.view.takeWhile(_ <= n).contains(n)
 
   // assumes not even, check evenness before calling - perf note: must pass partially applied >= method
-  private def prime(i: Long) =
-    prime3 takeWhile (math.sqrt(i).>= _) forall { i % _ != 0 }
+  private def prime(i: Long) = {
+    if (i == 1l) false
+    else {
+    primes takeWhile (math.sqrt(i).>= _) forall {
+      i % _ > 0
+    }}
+  }
 
 
   def primeFactors(x: Long): List[Long] = {
@@ -93,12 +91,12 @@ object Euler {
    }
   }
 
-  def factorial(x: Int): BigInt = {
-    def go(seed: Int, acc: BigInt): BigInt = {
+  def factorial(x: Int): Long = {
+    def go(seed: Int, acc: Long): Long = {
       if(seed == 1) acc
       else go(seed -1, acc * seed)
     }
-    go(x, BigInt(1))
+    go(x, 1l)
   }
 
   def centralBinomialCoeficient(x: Int): BigInt = {
@@ -121,6 +119,44 @@ object Euler {
     } yield List(a, b)
   }
 
+  def digits(x: Int): List[Int] = {
+    x.toString.foldRight(List[Int]())((c, acc) => c.toString.toInt :: acc)
+  }
+
+  def rotate(x: Int): Int = {
+    val ds = digits(x)
+    ds match{
+      case 0 :: _ => x
+      case h :: t => ( h :: t.reverse).reverse.mkString.toInt
+      case _ => x
+    }
+  }
+
+  def rotations(x: Int): List[Int] = {
+    digits(x).foldLeft((List[Int](), x))((acc, t) => {
+      val r = rotate(acc._2)
+      (r :: acc._1, r)
+    })._1.distinct
+  }
+
+  def isPalindrome(s: String): Boolean = {
+    !s.startsWith("0") && s == s.reverse
+  }
+
+  def truncate(x: Int): Int = {
+    if(digitLength(x) == 1) x else digits(x).drop(1).mkString.toInt
+  }
+
+  def truncateTail(x: Int): Int = {
+    if(digitLength(x) == 1) x else digits(x).reverse.drop(1).reverse.mkString.toInt
+  }
+
+  def digitLength(x: Int) = (Math.floor(Math.log10(Math.abs(x))) + 1) toInt
+
+  lazy val ds = 1 to 9
+  def isPanDigital(x: Int, y: Int, prod: Int) = {
+    (digits(x) ::: digits(y) ::: digits(prod)).sorted.intersect(ds) == ds
+  }
 
   object One_Twenty{
 
@@ -407,7 +443,217 @@ object Euler {
       fibLength(4782)
     }
 
+    def problem26 = {
+      val r = (1 until 1000).map(x => (1 to 2000)
+        .find(BigInt(10).modPow(_, x) == 1))
 
+      r.zipWithIndex.map(a => (a._1.getOrElse(0), a._2 +1)).maxBy(_._1)
+    }
+
+    def problem27 = {
+      // brute force
+      //borrowing someone's solution for now
+
+      lazy val ps: Stream[Int] = 2 #:: Stream.from(3).filter(i =>
+        ps.takeWhile(j => j * j <= i).forall(i % _ > 0))
+
+      def isPrime(n: Int) = ps.view.takeWhile(_ <= n).contains(n)
+
+      lazy val ns = (-999 until 1000).flatMap { a =>
+        (-999 until 1000).map(b => (a, b, (0 to 1000).view
+          .takeWhile(n => isPrime((n * n + a * n + b))).size))
+      }
+
+      lazy val t = ns.reduceLeft((a, b) => if(a._3 > b._3) a else b)
+
+      t._1 * t._2
+    }
+
+    def problem28 = {
+      def gridSum(n: Int) = {
+        if(n == 1) n
+        else{
+          val n2 = n * n
+          val gap = n-1
+          n2 + n2 - gap + n2 - (2 * gap) + n2- (3 * gap)
+        }
+      }
+
+      (1 to 1001 by 2).map(gridSum).sum
+    }
+
+    def problem29 = {
+      val r = for{
+        a <- (2 to 100).map(BigInt(_))
+        b <- (2 to 100)
+      } yield a.pow(b)
+      r.distinct.length
+    }
+
+    def problem30 = {
+    val cap = (Math.pow(9,5) * 6).toInt
+    def isDigitFifth(x: Int) = {
+      x == digits(x).foldLeft(0)((acc, a) => acc + Math.pow(a, 5).toInt)
+    }
+
+      (2 to cap).filter(isDigitFifth).sum
+
+    }
+
+    def problem31 = {
+      // My first foray into dynamic programming
+      // lovely combinatronics
+
+      val coins = List(1,2,5,10,20,50,100,200)
+      val choices = Array.ofDim[Int](201)
+      choices(0) = 1
+
+      coins.indices.foreach(i => {
+        coins(i) to 200 foreach (ci => {
+          val v = choices(ci)
+          choices(ci) = v + choices(ci - coins(i))
+        })
+      })
+
+      choices.last
+    }
+
+    def problem32 = {
+      val r = for{
+        a <- 1 to 5000
+        b <- 1 to 9999/a
+        prod = a * b
+        pdn = if (isPanDigital(a,b,prod)) prod else 0
+      } yield pdn
+
+      r.distinct.sum
+    }
+
+    def problem33 = {
+
+      def cancels(n: Int, d: Int, i: Int) = {
+        ((BigDecimal(10) * n) +i) / ((10 * i) + d) == BigDecimal(n)/d
+      }
+
+      val ls = for{
+        i <- 1 to 9
+        d <- 1 until i
+        n <- 1 until d
+        r = if(cancels(n,d,i)) (n,d) else (0,0)
+      } yield r
+
+      ls.filter(_._2 != 0)
+    }
+
+    def problem34 = {
+      var memo = Map[Int, Int]()
+      memo += (0 -> 1)
+      1 to 9 foreach(i => memo += (i -> factorial(i).toInt))
+
+      (3 to memo(9).toInt*7).filter(i => {
+        digits(i).foldLeft(0)((acc, d) => memo(d) + acc) == i
+      })
+      .sum
+    }
+
+    def problem35 = {
+      primes.takeWhile(_ < 1000000).filter(x => {
+        !digits(x.toInt).contains(0) && rotations(x.toInt).forall(prime(_))
+      }).size
+
+    }
+
+    def problem36 = {
+      (1 to 999999).filter (i => {
+        isPalindrome(i.toString) && isPalindrome(Integer.toString(i, 2))
+      }).sum
+    }
+
+    def problem37 = {
+
+      def walk(i: Int, cycles: Int)(f: Int => Int): Boolean = {
+        cycles match{
+          case 1 => prime(i)
+          case _ => prime(i) && walk(f(i), cycles - 1)(f)
+        }
+      }
+
+      def truncateLeft(x: Int) = {
+        def walkL(x: Int, cycles: Int) = walk(x, cycles)(truncate)
+
+        walkL(x, digitLength(x))
+      }
+
+      def truncateRight(x: Int) = {
+        def walkR(i: Int, cycles: Int) = walk(i, cycles)(truncateTail)
+
+        walkR(x, digitLength(x))
+      }
+
+      primes.takeWhile(_ < 1000000).filter(p => {
+          p >  11 && !digits(p.toInt).contains(0) && truncateLeft(p.toInt) && truncateRight(p.toInt)
+      }).foldLeft(0l)((acc, i) => acc + i)
+    }
+
+    def problem38 = {
+
+      def check(x: String) = ds.forall(i => digits(x.toInt).contains(i))
+      (9387 to 9234 by -1).map(x => x.toString + (2 * x).toString).filter(check)
+
+    }
+
+    def problem39 = {
+
+      // a < b < c
+      // a^2 + b^2 = c^2
+      // a + b + c = p
+      // ... reduces down to:
+      // b = (p^2 -2pa) / (2p-2a)
+      val r = for {
+        p <- 4 to 1000 by 2
+        a <- 1 until p/3
+        b = ((p * p) - 2 * p * a) / BigDecimal(((2 * p) - (2 * a)))
+        if (b.isWhole())
+      } yield p
+      r
+        .groupBy(a => a)
+        .map(x => (x._1, x._2.length))
+        .foldLeft((0, 0))((max, t) =>{
+          t match{
+            case (a, b) if b > max._2 => t
+            case _ => max
+          }
+      })
+    }
+
+    def problem40 = {
+      val r = 0 to 7
+      val powersOf10 = r.map(x => Math.pow(10, x).toInt)
+      def charactersBefore(x: Int) = {
+        (1 to digitLength(x)) map (y => {
+          val p = Math.pow(10, y).toInt
+          if (p > x) x * digitLength(x)
+          else p * digitLength(p)
+        })
+      }
+
+      powersOf10
+
+    }
+
+
+
+  }
+
+  object FortyOne_Sixty  {
+
+    def problem41 = {
+
+      val digits = Set(1,2,3,4,5,6,7,8,9,0)
+      lazy val r = Range(1023456789, 9876543210)
+
+
+    }
 
   }
 
