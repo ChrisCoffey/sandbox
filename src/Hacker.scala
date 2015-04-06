@@ -159,4 +159,83 @@ object Hacker {
     }
 
   }
+
+  object ChocolateFeast {
+
+
+    case class TestCase(n: Int, c: Int, m: Int)
+
+    def main(args: Array[String]): Unit = {
+      val lines = io.Source.stdin.getLines.filter(_.length > 0).toList.drop(1)
+      val cases = lines.map(toCases)
+      cases.map(howMuchCandy).map(println)
+    }
+
+    def howMuchCandy(c: TestCase): Int = {
+      val bought = c.n / c.c
+      val exchanged = bought / c.m
+      val wrappers = (bought % c.m) + exchanged
+
+      println(wrappers)
+      def leftovers(w: Int, acc: Int): Int =
+        w / c.m match {
+          case 0 => acc
+          case x => {
+            leftovers((x % c.m) + (w/c.m), acc + (w/c.m))
+          }
+        }
+      val allLeftovers = leftovers(wrappers, 0)
+
+      bought + exchanged + allLeftovers
+    }
+
+    def toCases(s: String): TestCase = {
+      val ls = s.split(" ").map(_.toInt)
+      TestCase(ls.head, ls(1), ls(2))
+    }
+  }
+
+  object Cavities {
+
+    case class TestCase(ls: List[List[Int]])
+    def main(args: Array[String]): Unit = {
+      val lines = io.Source.stdin.getLines.filter(_.length > 0).toList.drop(1)
+      val c = TestCase(lines.map(_.map(c => c.toInt - 48).toList))
+
+      val h = c.ls.map(adjacent)
+      val v = rotate(rotate(c.ls).map(adjacent))
+
+      merge(h, v).map(ls =>
+        ls.map(p =>
+          if(p._2) "X" else p._1.toString
+        ).mkString(""))
+        .foreach(println)
+
+    }
+
+    def adjacent(ls: List[Int]): List[(Int, Boolean)] = {
+      ls.zipWithIndex.map(l => {
+        val x = l._1
+        if(l._2 ==0 || l._2 == ls.length -1) (x, false)
+        else (x, x > ls(l._2-1) && x > ls(l._2 + 1))
+      })
+    }
+
+    //rotate the matrix
+    def rotate[T](tc: List[List[T]]): List[List[T]] = {
+      (0 until tc.head.length).foldLeft(List[List[T]]())((acc, i) => {
+        tc.map(_(i)) :: acc
+      }).reverse
+    }
+
+    def merge(a: List[List[(Int, Boolean)]], b: List[List[(Int, Boolean)]]): List[List[(Int, Boolean)]] = {
+      (0 until a.length).foldLeft(List[List[(Int, Boolean)]]())((acc, i) => {
+        a(i).zipWithIndex.map(p => (p._1._1, b(i)(p._2)._2 && p._1._2)) :: acc
+      }).reverse
+    }
+
+  }
+
+  
+
 }
