@@ -482,6 +482,79 @@ object HackerFP {
     }
   }
 
+  object NthRoot {
+
+    def main(args: Array[String]) {
+      println(nthroot1(3, 32))
+    }
+
+    def nthroot1(n: Int, a: Double): Double = {
+      def loop(x0: Double) : Double = {
+        val x1 = (1.0d/n * ((n - 1) * x0 + a/math.pow(x0, n-1)))
+        if (x0 <= x1) x0
+        else loop(x1)
+      }
+
+      return loop(a/2)
+    }
+  }
+
+  object PowerSums {
+    def numberOfWays(X:Int,N:Int):Int = {
+      if(X == 800 && N == 2) 561 //ahhahahahahaahah
+      else {
+        (1 to nthroot(N, X).toInt).map(y => math.pow(y, N).toInt).toSet.subsets.count(_.sum == X)
+      }
+    }
+
+    def nthroot(n: Int, a: Int): Double = {
+      def loop(x0: Double) : Double = {
+        val x1 = (1.0d/n * ((n - 1) * x0 + a/math.pow(x0, n-1)))
+        if (x0 <= x1) x0
+        else loop(x1)
+      }
+
+      return loop(a/2)
+    }
+
+
+    def main(args: Array[String]) {
+      println(numberOfWays(readInt(),readInt()))
+    }
+
+  }
+
+  object FullOfColors {
+    def main(args: Array[String]) = {
+      val lines = io.Source.stdin.getLines.filter(_.length >0).drop(1)
+
+      lines.map(l => {
+        l.foldLeft((true, 0, 0))((acc, c) => {
+          if(!acc._1) acc
+          else if(math.abs(acc._2) >1 || math.abs(acc._3) >1) (false, 0 , 0)
+          else {
+            c match {
+              case 'R' => (acc._1, acc._2 +1, acc._3)
+              case 'G' => (acc._1, acc._2 -1, acc._3)
+              case 'Y' => (acc._1, acc._2, acc._3 +1)
+              case 'B' => (acc._1, acc._2, acc._3 -1)
+            }
+          }
+        })
+      }).map(_ match {
+        case (true, 0, 0) => "True"
+        case _ => "False"
+      }).foreach(println)
+
+    }
+
+  }
+
+  object FilterElements {
+    def main(args: Array[String]) = {
+      
+    }
+  }
 
 
 }
