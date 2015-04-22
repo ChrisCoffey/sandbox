@@ -138,9 +138,6 @@ object Hacker {
 
   object HalloweenParty {
 
-    // 1 2 3 4 5 6 7  8  9  10
-    // 0 1 2 4 6 9 12 16 20 25
-
     def main(args: Array[String]): Unit = {
       val lines = io.Source.stdin.getLines.filter(_.length >0).toList.drop(1)
       lines.map(_.toLong).map(i => math.floor((i * i)/4)).foreach(println)
@@ -236,6 +233,228 @@ object Hacker {
 
   }
 
-  
+  object Stones {
+    //for each step
+    // add a & b to the previous value to create two new values
+    // repeat
+
+    case class TestCase(count: Int, a: Int, b: Int)
+    trait Tr {val i: Int}
+    case class Tree(i: Int, var l: Tr, var r: Tr) extends Tr
+    case class Leaf(i: Int) extends Tr
+
+    def main(args: Array[String]): Unit = {
+      val lines = io.Source.stdin.getLines.filter(_.length >0).toList.drop(1)
+      val cases = lines.map(_.toInt).sliding(3,3).map(c => TestCase(c.head, c(1), c(2))).toList
+
+      val ls = cases.map(asPath).map(m => m match {
+        case t:Tree => leaves(t)
+        case l:Leaf => List(l.i)
+      })
+      println(ls)
+
+    }
+
+    def leaves(t: Tree): List[Int] = {
+      def go(t: Tree, acc: List[Int]): List[Int] = {
+        t.l match {
+          case Leaf(i) => t.l.i :: t.r.i :: acc
+          case Tree(i, l:Leaf, r:Leaf) => {
+            l.i :: r.i :: acc
+          }
+          case Tree(i, l: Tree, r: Tree) =>{
+            go(l, acc) ::: go(r, acc) ::: acc
+          }
+
+        }
+      }
+
+      go(t, Nil)
+    }
+
+    def asPath(c: TestCase): Tr = {
+      def go(t: Tree, depth: Int): Tr = {
+        if(depth == 0){
+          t.l = Leaf(t.i + c.a)
+          t.r = Leaf(t.i + c.b)
+          t
+        }
+        else {
+          t.l = go(Tree(t.i + c.a, null, null), depth -1)
+          t.r = go(Tree(t.i + c.b, null, null), depth -1)
+          t
+        }
+      }
+
+      val t = Tree(0, null, null)
+      go(t, c.count -2 )
+      t
+    }
+
+
+  }
+
+}
+
+object Algebra1 {
+
+  trait Magma[T] {
+    def +(l: T, r: T): T
+  }
+
+  trait QuasiGroup[T] extends Magma[T] {
+
+  }
+
+}
+
+object HackerFP {
+
+
+
+  object First {
+    def f(n: Int): Unit = {
+      n match{
+        case 0 => ()
+        case _ =>{
+          println("Hello World")
+          f(n-1)
+        }
+      }
+    }
+
+    def main(args: Array[String]) {
+      val lines = io.Source.stdin.getLines.filter(_.length >0).toList
+      lines.map(_.toInt).foreach(f)
+    }
+
+  }
+
+  object ReverseList {
+
+    def f(num:Int,arr:List[Int]):List[Int] = {
+      arr.foldLeft(List[Int]())((acc, i) =>{
+        acc ++ List.fill(num)(i)
+      })
+    }
+  }
+
+  object eToX {
+    def main(args: Array[String]): Unit ={
+      val lines = io.Source.stdin.getLines.filter(_.length >0).toList.drop(1)
+      lines.map(_.toFloat).map(f).foreach(println)
+    }
+
+    def f(x: Float): Float = {
+        def factorial(y: Float): Float = {
+          def go(seed: Float, acc: Float): Float = {
+            if(seed <= 1) acc
+            else go(seed -1, acc * seed)
+          }
+          go(y, 1f)
+        }
+
+      (0 to 9).map(i => math.pow(x,i) / factorial(i)).sum.toFloat
+    }
+
+  }
+
+  object ListFilter {
+    def f(arr:List[Int]):List[Int] = {
+      arr.zipWithIndex.filter(_._2 % 2 ==0).map(_._1)
+    }
+  }
+
+  object Pascals {
+    def main(args: Array[String]): Unit = {
+      val lines = io.Source.stdin.getLines().filter(_.length > 0).toList.map(_.toInt)
+
+      def factorial(y: Int): Int = {
+        def go(seed: Int, acc: Int): Int = {
+          if(seed <= 1) acc
+          else go(seed -1, acc * seed)
+        }
+        go(y, 1)
+      }
+
+      (0 until lines.head).map(i => {
+        (0 to i).map(h => factorial(i) / (factorial(h) * factorial(i - h))).mkString(" ")
+      }).foreach(println)
+
+    }
+  }
+
+  object Sierpinski {
+
+    //todo update this to fold the top down on the bottm
+    // algoritm should go based on i & 2 i
+    def drawTriangles(n: Int) {
+      //Draw the N'th iteration of the fractal as described
+      // in the problem statement
+      (1 to 32).map(i => {
+        (List.fill(32 - i)(0) :::
+          List.fill(63 - (2*(32 - i)))(1) :::
+          List.fill(32 -i)(0))
+      })
+    }
+
+  }
+
+  object StringMingle {
+    def main(args: Array[String]): Unit = {
+      val lines = io.Source.stdin.getLines.filter(_.length >0).toList
+
+      println(lines.head.zip(lines.reverse.head).map(c => c._1.toString + c._2.toString).mkString(""))
+
+    }
+
+  }
+
+  object StringSwap {
+    def main(args: Array[String]) {
+      val lines = io.Source.stdin.getLines.filter(_.length >0).toList.drop(1)
+      lines.map(l => {
+        val e = l.zipWithIndex.filter(_._2 % 2 == 0).map(_._1)
+        val o = l.zipWithIndex.filter(_._2 %2 == 1).map(_._1)
+        o.zip(e).map(c => c._1.toString + c._2.toString).mkString("")
+      }).foreach(println)
+    }
+  }
+
+  object StringPivot {
+    def main(args: Array[String]) = {
+      val lines = io.Source.stdin.getLines.filter(_.length >0).toList.drop(1)
+      lines.map(s => rotate(s, s.length, Nil).reverse.mkString(" ")).foreach(println)
+    }
+
+    def rotate(s: String, i: Int, acc: List[String]): List[String] = {
+      if(i == 0) acc
+      else {
+        val str = (s.head.toString + s.drop(1).reverse).reverse
+        rotate(str, i -1, str :: acc)
+      }
+    }
+  }
+
+  object StringCompress {
+    def main(args: Array[String]) = {
+      val line = io.Source.stdin.getLines.filter(_.length > 0).toList.head
+      val r = line.foldLeft((StringBuilder.newBuilder + '_', 1))((acc, c) => {
+        if(acc._1.last == c) (acc._1, acc._2 + 1)
+        else if (acc._2 > 1) (acc._1 ++= acc._2.toString + c, 1)
+        else (acc._1 + c, 1)
+      })
+      println(
+        if(r._2 > 1 ) r._1.drop(1) + r._2.toString
+        else r._1.drop(1)
+      )
+
+    }
+
+
+
+  }
+
+
 
 }
