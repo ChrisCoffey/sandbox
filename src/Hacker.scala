@@ -450,9 +450,36 @@ object HackerFP {
       )
 
     }
+  }
 
+  object PrefixCompression {
+    def main(args: Array[String]) = {
+      val line = io.Source.stdin.getLines.filter(_.length >0).toList
+      val x = line.head
+      val y = line.drop(1).head
 
+      val p = x.zip(y).takeWhile(s => s._1 == s._2).map(_._1).mkString("")
+      val xp = x.drop(p.length)
+      val yp = y.drop(p.length)
+      println(s"${p.length} $p")
+      println(s"${xp.length} $xp")
+      println(s"${yp.length} $yp")
 
+    }
+
+  }
+
+  object StringCharacterRemoval {
+    def main(args: Array[String]) = {
+      val lines = io.Source.stdin.getLines().filter(_.length > 0).toList.head
+
+      println(
+        lines.foldLeft(("", Set.empty[Char]))((acc, i) => {
+          if(acc._2.contains(i)) acc
+          else (acc._1 + i.toString, acc._2 + i)
+        })._1
+      )
+    }
   }
 
 
