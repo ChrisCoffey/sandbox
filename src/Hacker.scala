@@ -552,7 +552,48 @@ object HackerFP {
 
   object FilterElements {
     def main(args: Array[String]) = {
-      
+      val lines = io.Source.stdin.getLines.filter(_.length > 0).drop(1)
+      lines.sliding(2,2).map(ls => {
+        val x = ls.head.split(" ").drop(1).map(_.toInt).head
+        val as = ls.drop(1).head.split(" ").map(_.toInt)
+        occurances2(as.zipWithIndex.toList, Map.empty[Int, (Int, Int)])
+          .filter(t => t._2._1 >= x)
+          .map(t => (t._1, t._2._2)).toSeq
+          .sortBy(_._2)
+          .map(_._1)
+
+      }).foreach(l => println(if(l.isEmpty) "-1" else l.mkString(" ")))
+
+
+    }
+
+
+    def occurances2(ls: List[(Int, Int)], m: Map[Int, (Int, Int)]): Map[Int, (Int, Int)]= {
+      ls match {
+        case h :: Nil => {
+          val i = m.getOrElse(h._1, (0, h._2))
+          m + (h._1 ->(i._1 + 1, i._2))
+        }
+        case h :: t => {
+          val i = m.getOrElse(h._1, (0, h._2))
+          occurances2(t, m + (h._1 ->(i._1 + 1, i._2)))
+        }
+      }
+    }
+  }
+
+  object SuperDigit {
+    def main (args: Array[String]) = {
+      val nk = io.Source.stdin.getLines().filter(_.length >0).toList.head.split(" ")
+      val np = sd(BigInt(nk.head))
+      val r = sd(np * nk.drop(1).head.toInt)
+      println(r)
+
+    }
+
+    def sd(i: BigInt): Int = {
+     if(i < 10) i.toInt
+      else sd(i.toString.map(_.toInt).sum)
     }
   }
 
