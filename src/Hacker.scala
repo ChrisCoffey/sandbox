@@ -597,5 +597,59 @@ object HackerFP {
     }
   }
 
+  object ConvexHull {
+    def main(args: Array[String]) = {
+
+    }
+
+
+  }
+
+  object RecursiveTrees {
+    def main(args: Array[String]) = {
+      val n = io.Source.stdin.getLines().filter(_.length > 0).toList.head.toInt
+
+
+    }
+
+    def drawLine(oneIndexes: Seq[Int]): String = {
+      (0 until 100).map(i => if(oneIndexes.contains(i)) "1" else "_").mkString
+    }
+
+    def calculate(i: Int, h: Int, oneIndexes: Seq[Int]): Seq[Int] = {
+
+    }
+
+      def go()
+  }
+
+  object SuperQueen {
+
+
+
+//    //0 = empty, 1 = threatened, 9 = queen
+//    def placeQueen(matrix: List[List[Int]], x: Int, y: Int): Boolean= {
+//      matrix.foldLeft(List[List[Int]])((acc, i) => {
+//
+//      })
+//
+//    }
+//
+//    def solveNSuperQueens(n: Int): Int = {
+//
+//      val board = List.fill(n)(List.fill(n)(true))
+//
+//      // Fill Up this function body to display the number of arrangements
+//      // Of N Super-Quees on a chessboard
+//    }
+//
+//
+//    def main(args: Array[String]) {
+//      /* Enter your code here. Read input from STDIN. Print output to STDOUT. Your class should be named Solution
+//*/
+//      println(solveNSuperQueens(readInt))
+//    }
+  }
+
 
 }
