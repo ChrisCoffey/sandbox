@@ -1,3 +1,5 @@
+import scala.io.Source
+
 object Hacker {
 
   object Helpers{
@@ -605,23 +607,139 @@ object HackerFP {
 
   }
 
+
+  object RemoveDuplicates {
+    def main(args: Array[String]): Unit = {
+      val s = io.Source.stdin.getLines().filter(_.length > 0).toList.head
+      println(s.foldLeft(List[Char]())((acc, c) => if(acc.contains(c)) acc else c :: acc ).reverse.mkString)
+
+    }
+  }
+
+  object HugeGCD {
+    def main(args: Array[String]): Unit ={
+      val mod = 1000000007
+
+    }
+  }
+
   object RecursiveTrees {
     def main(args: Array[String]) = {
       val n = io.Source.stdin.getLines().filter(_.length > 0).toList.head.toInt
+        val ranges = (1 to n).foldLeft(List[List[Int]]())((acc, i) =>
+            acc match {
+                case Nil => (63 to 32 by -1 ).toList :: acc
+                case h :: t => (h.reverse.head to h.reverse.head / 2 by -1).toList :: acc
+            }
+        )
+
+        (1 to n).foldLeft(Seq[Int](50)){ (acc, i) =>
+            val rs = ranges.reverse(i -1)
+            val verticals = rs.take(rs.length/2)
+            val diagonals = rs.drop(rs.length/2)
+
+            verticals.foreach{ x =>
+                println(drawLine(Seq(i - diagonals.length, i + diagonals.length)))
+            }
+
+            val ends = acc.flatMap(x => Seq(x - diagonals.length, x + diagonals.length))
+            ends.foreach(println)
+
+            ends
+
+
+        }
+
+
 
 
     }
+
 
     def drawLine(oneIndexes: Seq[Int]): String = {
       (0 until 100).map(i => if(oneIndexes.contains(i)) "1" else "_").mkString
     }
 
-    def calculate(i: Int, h: Int, oneIndexes: Seq[Int]): Seq[Int] = {
+  }
+
+
+  object ArithmeticParser {
+
+//      Expression ::= Term [+-] Expression
+//          | Term
+//
+//      Term       ::= Factor [*/] Term
+//          | Factor
+//
+//      Factor     ::= Number
+//      | [+-] Factor
+//          | '(' Expression ')'
+
+
+    def main(args: Array[String]): Unit = {
+        val expr = Source.stdin.getLines().filter(_.length > 0).toList.head
+
+        val tokens = expr.split(Array(Open,Close,Div,Mult,Plus,Minus, ' '))
+        println(tokens)
 
     }
 
-      def go()
+      val Operators = Set(Open, Close, Div, Mult, Plus, Minus).map(_.toString)
+      val P1 = List(Mult, Div).map(_.toString)
+      val P2 = List(Plus, Minus).map(_.toString)
+
+      val Open = '('
+      val Close = ')'
+      val Div = '/'
+      val Mult = '*'
+      val Plus = '+'
+      val Minus = '-'
+
+      def eval(expr: List[String], acc: String,  stack: List[String]): String = {
+
+          expr match {
+              case Nil =>
+              case h :: t if Operators.contains(h) => stack match {
+                  case Nil =>
+                  case a :: b if P1.contains(a) => a
+                  case a :: b if P2.contains(a) => a
+              }
+              case h :: t => h + " " + acc
+          }
+
+
+      }
+
+
+
+
+
+
   }
+
+    object PentagonalNumbers {
+        def main(args: Array[String]) = {
+            val n = io.Source.stdin.getLines().filter(_.length > 0).toList.head.toInt
+        }
+    }
+
+    object GcdList {
+
+        def main (args: Array[String]) = {
+            val in = scala.io.Source.stdin.getLines().filter(_.length >0).toList.drop(1)
+            val slices = in.map(l => l.split(" ").map(_.toInt).sliding(2, 2).map(a => (a(0), a(1))).toList)
+           val r = slices.foldLeft(slices.head)((acc, ls) => {
+                acc.filter(i => ls.exists(e => e._1 == i._1 ))
+                    .map{i =>
+                        val other = ls.groupBy(_._1)(i._1).minBy(_._2)
+                        if (other._2 < i._2)  (i._1, i._2) else i
+                }
+            }).map(i => i._1 + " " + i._2).mkString(" ")
+
+            println(r)
+        }
+
+    }
 
   object SuperQueen {
 
