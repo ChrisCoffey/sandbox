@@ -2,21 +2,27 @@ package moscalic
 
 import java.io.{File, FileInputStream}
 
+import com.sksamuel.scrimage.nio.JpegWriter
 import com.sksamuel.scrimage.{Pixel, RGBColor, Image}
 
 object Moscalic {
 
-    val in = new FileInputStream(new File("/Users/ccoffey/Downloads/lambda-labs-logo_180x180.jpeg"))
+    def main(a: Array[String]) {
+        val image = Image.fromFile(new File("/Users/ccoffey/Downloads/lambda-labs-logo_180x180.jpeg"))
 
-    val image = Image.fromStream(in)
+        // general algorithm is to
+        // map each pixel to a color
+        // compute average color of all pixels
+        // tag the image with its average color
 
-    // general algorithm is to
-    // map each pixel to a color
-    // compute average color of all pixels
-    // this is the color of the image
+        // to build the mosaic, get a collection of images
+        // find their average colors
+        // sort by average color
+        // Divide the target image into
 
-    val
-
+        val newImg = image.scaleTo(2 * image.width, 2 * image.height)
+        newImg.output("big.jpeg")(JpegWriter())
+    }
 }
 
 trait ColorAverage[A] {
