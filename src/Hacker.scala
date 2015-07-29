@@ -1,3 +1,4 @@
+import scala.collection.immutable.Queue
 import scala.io.Source
 
 object Hacker {
@@ -679,42 +680,96 @@ object HackerFP {
     def main(args: Array[String]): Unit = {
         val expr = Source.stdin.getLines().filter(_.length > 0).toList.head
 
-        val tokens = expr.split(Array(Open,Close,Div,Mult,Plus,Minus, ' '))
-        println(tokens)
+        val rpn = parse(expr, Queue.empty[String], Nil, false)
+        println(eval(rpn, Nil) % 1000000007)
 
     }
 
-      val Operators = Set(Open, Close, Div, Mult, Plus, Minus).map(_.toString)
-      val P1 = List(Mult, Div).map(_.toString)
-      val P2 = List(Plus, Minus).map(_.toString)
+      val stopCharacters = Seq('+', '-', '*', '/', '(', ')', ' ')
+      val precedenceMap = Map("+" -> 2, "-" -> 2, "*" -> 3, "/" -> 3, "(" -> 4, ")" -> 4, "pos" -> 5, "neg" -> 5)
+      val operators = Set("+", "-", "pos", "neg", "*", "/")
+      //note unary operators will be specially coded. need to understand if previous symbol was an operator.
+      val unaryMapping = Map("+" -> pos, "-" -> neg)
 
-      val Open = '('
-      val Close = ')'
-      val Div = '/'
-      val Mult = '*'
-      val Plus = '+'
-      val Minus = '-'
+      val neg = "neg"
+      val pos = "pos"
 
-      def eval(expr: List[String], acc: String,  stack: List[String]): String = {
+    def parse(expr: String, out: Queue[String], stack: List[String], wasJustOp: Boolean): Queue[String] = {
+        if(expr.isEmpty) stack.foldLeft(out)((q, op) => q.enqueue(op))
+        else
+            nextToken(expr) match {
+            case (op, false) =>
+                if(wasJustOp && precedenceMap(op) == 2){
+                    parse(expr.drop(1), out, unaryMapping(op) :: stack, true)
+                }
+                else if(op == "("){
+                    parse(expr.drop(1), out, op :: stack, true)
+                }
+                else {
+                    stack match {
+                        case Nil => parse(expr.drop(1), out, op :: stack, true)
+                        case o2 :: t =>
+                           if(op == ")"){
+                               val popped = stack.takeWhile("(" !=)
+                               parse(expr.drop(1), out.enqueue(popped), stack.drop(popped.length +1), true)
+                           }
+                           else {
+                               if(precedenceMap(op) < precedenceMap(o2)) {
+                                   val ops = t.takeWhile(precedenceMap(op) < precedenceMap(_))
+                                   parse(expr.drop(1), out.enqueue(o2 :: ops), op ::t.drop(ops.length), true)
+                               }
+                               else {
+                                   parse(expr.drop(1), out, op :: stack, true)
+                               }
+                           }
+                    }
+                }
+            case (num, true) => parse(expr.drop(num.length), out.enqueue(num), stack, false)
+         }
+      }
 
-          expr match {
-              case Nil =>
-              case h :: t if Operators.contains(h) => stack match {
-                  case Nil =>
-                  case a :: b if P1.contains(a) => a
-                  case a :: b if P2.contains(a) => a
-              }
-              case h :: t => h + " " + acc
-          }
-
-
+      def nextToken(expr: String): (String, Boolean) = {
+         if( stopCharacters.contains(expr(0))) (expr(0).toString, false)
+          else (expr.takeWhile(!stopCharacters.contains(_)), true)
       }
 
 
 
 
-
-
+      def eval(out: Queue[String], stack: List[Int]): Long = {
+          println(stack)
+          println(out.head)
+          if(out.isEmpty) stack.head
+          else
+        out.dequeue match {
+            case (x, q) if operators.contains(x) =>
+                x match {
+                    case "+" =>
+                        val r = stack.head
+                        val l = stack.tail.head
+                        eval(q, l + r :: stack.drop(2))
+                    case "-" =>
+                        val r = stack.head
+                        val l = stack.tail.head
+                        eval(q, l - r :: stack.drop(2))
+                    case "/" =>
+                        val r = stack.head
+                        val l = stack.tail.head
+                        eval(q, l / r :: stack.drop(2))
+                    case "*" =>
+                        val r = stack.head
+                        val l = stack.tail.head
+                        eval(q, l * r :: stack.drop(2))
+                    case "pos" =>
+                        val r = stack.head
+                        eval(q, math.abs(r) :: stack.tail)
+                    case "neg" =>
+                        val r = stack.head
+                        eval(q, -r :: stack.tail)
+                }
+            case (num, q) => eval(q, num.toInt :: stack)
+        }
+      }
   }
 
     object PentagonalNumbers {
@@ -737,6 +792,21 @@ object HackerFP {
             }).map(i => i._1 + " " + i._2).mkString(" ")
 
             println(r)
+        }
+
+    }
+
+    object MatrixRotation {
+
+        def main(args: Array[String]): Unit ={
+            val in = scala.io.Source.stdin.getLines().filter(_.length > 0).toList
+            val r = in.head.split(" ")(2).toInt
+
+            val mx = in.tail.map(_.split(" "))
+
+            for (i <- 0 to r) {
+
+            }
         }
 
     }
