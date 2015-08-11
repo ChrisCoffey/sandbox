@@ -68,10 +68,6 @@ object Moscalic {
         val ac = averageColor(images.head._2)
         val ac2 = averageColor(i2)
 
-        println(ac)
-        println(ac2)
-        println(averageColor(imageForColor(ac.distance(zero), images)))
-
         val imageGrid = ArrayBuffer.fill(i2.width)(ArrayBuffer.fill(i2.height)(i2))
         for {
             x <- 0 until i2.width
@@ -94,9 +90,6 @@ object Moscalic {
 
         Image.fromAwt(buff, 1).output("perhaps.png")
     }
-
-
-
     def averageColor(i: Image): RGBColor = {
         val colorAgg = i.pixels.map(_.toColor.toRGB)
             .foldLeft((0, 0, 0))((acc, p) => (acc._1 + p.red, acc._2 + p.green, acc._3 + p.blue))
