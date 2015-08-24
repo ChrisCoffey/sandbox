@@ -10,11 +10,15 @@ import com.sksamuel.scrimage._
 
 object Moscalic {
 
+    def deltaE(a: HSLColor, b: HSLColor) =
+        Math.sqrt(math.pow(b.l))
+
+
     trait Distance[T] {
        def distance(r: T): Float
     }
 
-    implicit def colorDistance(c: RGBColor)= new Distance[RGBColor] {
+    implicit def colorDistance(c: HSLColor)= new Distance[HSLColor] {
         def distance(r: RGBColor) = {
             val pr = Math.abs(c.red - r.red) / 255f
             val pg = Math.abs(c.green - r.green) / 255f
@@ -64,7 +68,7 @@ object Moscalic {
         // sort by average color
         // Divide the target image into
 
-        val i2 =  images.head._2.cover(100, 100)
+        val i2 =  images.head._2.cover(50, 50)
         val ac = averageColor(images.head._2)
         val ac2 = averageColor(i2)
 
@@ -77,35 +81,67 @@ object Moscalic {
         }
 
         val buff = new BufferedImage(i2.width * 50, i2.height * 50, BufferedImage.TYPE_INT_RGB)
-        for {
-            x <- imageGrid.indices.par
-            y <- imageGrid(x).indices
-            m <- 0 until 50
-            n <- 0 until 50
-            i = (math.max(x - 1, 0) * 50) + m
-            j = (math.max(y - 1, 0) * 50) + n
-        } {
-            buff.setRGB(i, j, imageGrid(x)(y).pixel(m, n).toInt)
+        imageGrid.indices.par.foreach{ x =>
+           for {
+                y <- imageGrid(x).indices
+                m <- 0 until 50
+                n <- 0 until 50
+                i = (math.max(x - 1, 0) * 50) + m
+                j = (math.max(y - 1, 0) * 50) + n
+            } {
+                buff.setRGB(i, j, imageGrid(x)(y).pixel(m, n).toInt)
+            }
         }
 
         Image.fromAwt(buff, 1).output("perhaps.png")
     }
-    def averageColor(i: Image): RGBColor = {
+
+
+    def averageColor(i: Image): HSLColor = {
         val colorAgg = i.pixels.map(_.toColor.toRGB)
             .foldLeft((0, 0, 0))((acc, p) => (acc._1 + p.red, acc._2 + p.green, acc._3 + p.blue))
-        RGBColor(colorAgg._1 / i.pixels.length, colorAgg._2 / i.pixels.length, colorAgg._3 / i.pixels.length)
+        RGBColor(colorAgg._1 / i.pixels.length, colorAgg._2 / i.pixels.length, colorAgg._3 / i.pixels.length).to
     }
 
-    def imageForColor(c: Float, ls: List[(Float, Image)]): Image =
-        ls match {
-            case h :: ha :: Nil => if(Math.abs(h._1 - c) > Math.abs(ha._1 - c)) ha._2 else h._2
-            case _ =>
-                ls(ls.length/ 2) match {
-                    case (x, img) if x < c => imageForColor(c, ls.drop(ls.length / 2))
-                    case (x, img) if x > c => imageForColor(c, ls.take(ls.length / 2))
-                    case (x, img) if x == c => img
-                }
-        }
+    case class XYZColor(x: Double, y: Double, z: Double)
+
+    def toXyz(rgb: RGBColor): XYZColor = {
+        val gammaCompressionPt =  0.04045d
+
+        def toPoint
+
+        val r = rgb.red / 255d
+        val g = rgb.green / 255d
+        val b = rgb.blue / 255d
+
+        if(r > gammaCompressionPt)
+    }
+
+
+    private var memo = Map[Float, Image]()
+    def imageForColor(c: Float, ls: List[(Float, Image)]): Image = {
+        if(memo.contains(c))
+            memo(c)
+        else
+            ls match {
+                case h :: Nil =>
+                    memo += (c -> h._2)
+                    h._2
+                case h :: ha :: Nil =>
+                    val r = if(Math.abs(h._1 - c) > Math.abs(ha._1 - c)) ha._2 else h._2
+                    memo += (c -> r)
+                    r
+                case _ =>
+                    ls(ls.length/ 2) match {
+                        case (x, img) if x < c => imageForColor(c, ls.drop(ls.length / 2))
+                        case (x, img) if x > c => imageForColor(c, ls.take(ls.length / 2))
+                        case (x, img) if x == c =>
+                            memo += (c -> img)
+                            img
+                    }
+            }
+    }
+
 }
 
 
