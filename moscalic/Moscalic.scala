@@ -10,74 +10,25 @@ import com.sksamuel.scrimage._
 
 object Moscalic {
 
-    def deltaE(a: HSLColor, b: HSLColor) =
-        Math.sqrt(math.pow(b.l))
-
-
-    trait Distance[T] {
-       def distance(r: T): Float
-    }
-
-    implicit def colorDistance(c: HSLColor)= new Distance[HSLColor] {
-        def distance(r: RGBColor) = {
-            val pr = Math.abs(c.red - r.red) / 255f
-            val pg = Math.abs(c.green - r.green) / 255f
-            val pb = Math.abs(c.blue - r.blue) / 255f
-
-            ((pr + pg + pb) / 3) * 100
-        }
-    }
-
-    trait Comprable[T] {
-        def lt(r: T): Boolean
-        def gt(r: T): Boolean
-        def ~~(r: T): Boolean = !(this.lt(r) && this.gt(r))
-    }
-
-    val zero = RGBColor(0, 0, 0)
-    implicit def ColorComprable(c: RGBColor): Comprable[RGBColor] = new Comprable[RGBColor] {
-
-        def lt (r: RGBColor): Boolean = {
-            (c distance zero) < (r distance zero)
-        }
-
-        def gt(r: RGBColor): Boolean = {
-            (c distance zero) > (r distance zero)
-        }
-    }
-
-    implicit object ColorOrdering extends Ordering[RGBColor]{
-        override def compare(x: RGBColor, y: RGBColor): Int = x.distance(y).toInt
-    }
-
     def main(a: Array[String]) {
         val images = new File("/Users/ccoffey/workspace/open_source/scrimage/examples/composite")
             .listFiles()
             .map(f => Image.fromFile(f))
-            .map(i => (averageColor(i).distance(zero), i))
-            .sortBy(_._1)
             .toList
 
-        // general algorithm is to
-        // map each pixel to a color
-        // compute average color of all pixels
-        // tag the image with its average color
+        val i2 =  images.head.cover(500, 500)
 
-        // to build the mosaic, get a collection of images
-        // find their average colors
-        // sort by average color
-        // Divide the target image into
-
-        val i2 =  images.head._2.cover(50, 50)
-        val ac = averageColor(images.head._2)
-        val ac2 = averageColor(i2)
+        val compressedImages = images
+            .map(_.cover(50, 50))
+            .map(i => (averageColor(i), i))
 
         val imageGrid = ArrayBuffer.fill(i2.width)(ArrayBuffer.fill(i2.height)(i2))
         for {
-            x <- 0 until i2.width
+            x <- (0 until i2.width).par
             y <- 0 until i2.height
         }{
-            imageGrid(x)(y) = imageForColor(i2.pixel(x, y).toColor.distance(zero), images).cover(50, 50)
+            imageGrid(x)(y) =
+                imageForColor(LabColor.toLabSpace(XYZColor.toXyz(i2.pixel(x, y).toColor), XYZColor.D65WhitePoint), compressedImages)
         }
 
         val buff = new BufferedImage(i2.width * 50, i2.height * 50, BufferedImage.TYPE_INT_RGB)
@@ -97,49 +48,87 @@ object Moscalic {
     }
 
 
-    def averageColor(i: Image): HSLColor = {
+    def averageColor(i: Image): LabColor = {
         val colorAgg = i.pixels.map(_.toColor.toRGB)
             .foldLeft((0, 0, 0))((acc, p) => (acc._1 + p.red, acc._2 + p.green, acc._3 + p.blue))
-        RGBColor(colorAgg._1 / i.pixels.length, colorAgg._2 / i.pixels.length, colorAgg._3 / i.pixels.length).to
+        val rgb = RGBColor(colorAgg._1 / i.pixels.length, colorAgg._2 / i.pixels.length, colorAgg._3 / i.pixels.length)
+        LabColor.toLabSpace(XYZColor.toXyz(rgb), XYZColor.D65WhitePoint)
     }
 
     case class XYZColor(x: Double, y: Double, z: Double)
 
-    def toXyz(rgb: RGBColor): XYZColor = {
-        val gammaCompressionPt =  0.04045d
+    object XYZColor {
+            //An Observer 2°, Illuminant D65 CIE-31 XYZ conversion
+        def toXyz(rgb: RGBColor): XYZColor = {
+            val gammaCompressionPt =  0.04045d
+            def transform(a: Double): Double = {
+                val aa = a / 255
+                (if(aa > gammaCompressionPt)
+                    math.pow(((aa + 0.055) / 1.055), 2.4)
+                else
+                    aa / 12.92) * 100
+            }
 
-        def toPoint
+            val r = transform(rgb.red.toDouble)
+            val g = transform(rgb.green.toDouble)
+            val b = transform(rgb.blue.toDouble)
 
-        val r = rgb.red / 255d
-        val g = rgb.green / 255d
-        val b = rgb.blue / 255d
+            val x = r * 0.4214 + g * 0.3576 + b * 0.1805
+            val y = r * 0.2126 + g * 0.7152 + b * 0.0722
+            val z = r * 0.0193 + g * 0.1192 + b * 0.9505
 
-        if(r > gammaCompressionPt)
+            XYZColor(x, y, z)
+        }
+
+        val D65WhitePoint = XYZColor(0.95047, 1.0000, 1.08883)
     }
 
+    case class LabColor(L: Double, a: Double, b: Double)
+    object LabColor {
+        private val coef1 = math.pow(6d/29, 3)
+        private val coef2 = math.pow(29d/6, 2)
+        private val oneThird = 1d/3
+        private val fourOver29 = 4d/29
+        private val prod = oneThird * coef2
 
-    private var memo = Map[Float, Image]()
-    def imageForColor(c: Float, ls: List[(Float, Image)]): Image = {
+        def toLabSpace(xyz: XYZColor, whitePoint: XYZColor) = {
+            def f(t: Double) =
+                if(t > coef1)
+                    math.pow(t, oneThird)
+                else
+                    (prod * 29 * t) + fourOver29
+
+
+            val fOfY = f(xyz.y / whitePoint.y)
+            val L = 116 * fOfY
+            val a = 500 * (f(xyz.x / whitePoint.x) - fOfY)
+            val b = 200 * (fOfY - f(xyz.z - whitePoint.z))
+
+            LabColor(L, a, b)
+        }
+
+
+        def deltaE(l1: LabColor, l2: LabColor) =
+            math.sqrt( math.pow( l2.L - l1.L , 2) + math.pow(l2.a - l1.a, 2) + math.pow(l2.a - l1.a, 2) )
+
+    }
+
+    private var memo = Map[LabColor, Image]()
+    def imageForColor(c: LabColor, ls: List[(LabColor, Image)]): Image = {
         if(memo.contains(c))
             memo(c)
-        else
-            ls match {
-                case h :: Nil =>
-                    memo += (c -> h._2)
-                    h._2
-                case h :: ha :: Nil =>
-                    val r = if(Math.abs(h._1 - c) > Math.abs(ha._1 - c)) ha._2 else h._2
-                    memo += (c -> r)
-                    r
-                case _ =>
-                    ls(ls.length/ 2) match {
-                        case (x, img) if x < c => imageForColor(c, ls.drop(ls.length / 2))
-                        case (x, img) if x > c => imageForColor(c, ls.take(ls.length / 2))
-                        case (x, img) if x == c =>
-                            memo += (c -> img)
-                            img
-                    }
+        else {
+           val r =  ls.foldLeft((1000d, c, Image.filled(1, 1, Color.Black))){(deltaE, color) =>
+                val d = LabColor.deltaE(c, color._1)
+                if(d < deltaE._1) (d, color._1,  color._2)
+                else deltaE
             }
+
+            val t = (r._2, r._3)
+            memo = memo.+(t)
+            r._3
+        }
+
     }
 
 }
