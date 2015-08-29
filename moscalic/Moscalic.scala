@@ -10,16 +10,18 @@ import com.sksamuel.scrimage._
 
 object Moscalic {
 
+    val pixelImageSize = 50
+
     def main(a: Array[String]) {
-        val images = new File("/Users/ccoffey/workspace/open_source/scrimage/examples/composite")
+        val images = new File("/Users/ccoffey/workspace/open_source/scrimage/examples/filters")
             .listFiles()
             .map(f => Image.fromFile(f))
             .toList
 
-        val i2 =  images.head.cover(500, 500)
+        val i2 =  images.last.cover(250, 250)
 
         val compressedImages = images
-            .map(_.cover(50, 50))
+            .map(_.cover(pixelImageSize, pixelImageSize))
             .map(i => (averageColor(i), i))
 
         val imageGrid = ArrayBuffer.fill(i2.width)(ArrayBuffer.fill(i2.height)(i2))
@@ -31,22 +33,27 @@ object Moscalic {
                 imageForColor(LabColor.toLabSpace(XYZColor.toXyz(i2.pixel(x, y).toColor), XYZColor.D65WhitePoint), compressedImages)
         }
 
-        val buff = new BufferedImage(i2.width * 50, i2.height * 50, BufferedImage.TYPE_INT_RGB)
+        val buff = new BufferedImage(i2.width * pixelImageSize, i2.height * pixelImageSize, BufferedImage.TYPE_INT_RGB)
         imageGrid.indices.par.foreach{ x =>
            for {
                 y <- imageGrid(x).indices
-                m <- 0 until 50
-                n <- 0 until 50
-                i = (math.max(x - 1, 0) * 50) + m
-                j = (math.max(y - 1, 0) * 50) + n
+                m <- 0 until pixelImageSize
+                n <- 0 until pixelImageSize
+                i = (math.max(x - 1, 0) * pixelImageSize) + m
+                j = (math.max(y - 1, 0) * pixelImageSize) + n
             } {
-                buff.setRGB(i, j, imageGrid(x)(y).pixel(m, n).toInt)
+               try{
+                   buff.setRGB(i, j, imageGrid(x)(y).pixel(m, n).toInt)
+               }catch {
+                   case e: Exception =>
+                       //todo understand where I'm crossing the boundaries here
+                    println(s"i=$i  j=$j  x=$x  y=$y m=$m n=$n")
+               }
             }
         }
 
         Image.fromAwt(buff, 1).output("perhaps.png")
     }
-
 
     def averageColor(i: Image): LabColor = {
         val colorAgg = i.pixels.map(_.toColor.toRGB)
