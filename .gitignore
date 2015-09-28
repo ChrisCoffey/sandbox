@@ -22,3 +22,4 @@ api/
 target/
 /services/projectFilesBackup
 /services/.publish.sh
+*.class

@@ -1,6 +1,180 @@
 import scala.collection.immutable.Queue
 import scala.io.Source
 
+object Algorithms {
+   object Warmpus {
+     object ArraySum {
+       def main (args: Array[String]): Unit = {
+         val line = io.Source.stdin.getLines().filter(_.length > 0).drop(1).toList.head
+         println(line.split(" ").map(_.toInt).sum)
+       }
+     }
+
+     object ArraySumLong {
+       def main (args: Array[String]): Unit = {
+         val line = io.Source.stdin.getLines().filter(_.length > 0).drop(1).toList.head
+         println(line.split(" ").map(_.toLong).sum)
+       }
+     }
+
+     object DiagonalSumDifference {
+       def main (args: Array[String]): Unit = {
+         val matrix = io.Source.stdin.getLines().filter(_.length > 0).drop(1).map(_.split(" ").map(_.toInt)).toList
+
+         val lr = matrix.indices map (i => matrix(i)(i)) sum
+         val rl = matrix.indices.reverse map (i => matrix(i)(i)) sum
+         val diff = lr - rl
+         println(math.abs(diff))
+       }
+     }
+
+     object ArrayFractions {
+       def main (args: Array[String]): Unit ={
+         val lines = io.Source.stdin.getLines().filter(_.length > 0).toList
+         val n = lines.head.toDouble
+         val ints = lines.tail.head.split(" ").map(_.toInt)
+
+         println( "%.3f".format(ints.count(_ > 0) / n))
+         println( "%.3f".format(ints.count(_ < 0) / n))
+         println( "%.3f".format(ints.count(_ == 0) / n))
+       }
+     }
+
+     object Staircase {
+       def main (args: Array[String]): Unit = {
+         val n = io.Source.stdin.getLines().filter(_.length > 0).toList.head.toInt
+
+         val ls = 1 to n map (i => (List.fill(i)("#") ++ List.fill(n - i)(" ")).mkString.reverse) mkString("\n")
+         println(ls)
+       }
+     }
+
+     object TimeConversion {
+       def main (args: Array[String]): Unit = {
+         val n = io.Source.stdin.getLines().filter(_.length > 0).toList.head
+
+         val r = n match {
+           case pm if pm.endsWith("PM")=>
+             val Array(hh, mm, ss) = pm.dropRight(2).split(":")
+             s"${if(hh.toInt == 12) hh.toInt else hh.toInt + 12}:$mm:$ss"
+           case am =>
+             val Array(hh, mm, ss) =  am.dropRight(2).split(":")
+             s"${if(hh.toInt == 12) "00" else hh}:$mm:$ss"
+         }
+
+        println(r)
+       }
+
+     }
+
+     object LibraryFine {
+       def main(args: Array[String]): Unit = {
+         val in = io.Source.stdin.getLines().filter(_.length > 0).toList
+         val actual = in.head.split(" ").map(_.toInt)
+         val expected = in.tail.head.split(" ").map(_.toInt)
+         val diff = actual.zip(expected).map(p => p._1 - p._2)
+
+         val r = diff match {
+           case Array(_, _, x) if x > 0 => 10000
+           case Array(_, m, 0) if m > 0 => m * 500
+           case Array(d, 0, 0) if d > 0 => d * 15
+           case _ => 0
+         }
+
+         println(r)
+       }
+     }
+
+     object BigIntFactorial {
+       def main(args: Array[String]): Unit = {
+         val in = io.Source.stdin.getLines().filter(_.length > 0).toList.head.toInt
+         def f(x: Int, acc: BigInt): BigInt =
+          x match {
+            case 0 => acc
+            case _ => f(x - 1, acc * x)
+          }
+
+         println(f(in, 1))
+       }
+
+     }
+   }
+
+   object Implementation {
+     object MatrixRotation {
+       type Matrix = Seq[Seq[Int]]
+       case class MatrixRing(top: Seq[Int], left: Seq[Int], bottom: Seq[Int], right: Seq[Int]) {
+         def rotate: MatrixRing =
+           MatrixRing(
+             top.drop(1) :+ right.head,
+             left.drop(1) :+ top.head,
+             bottom.drop(1) :+ left.head,
+             right.drop(1) :+ bottom.head)
+
+       }
+
+       // to reconstruct, sort matrix rings by size, then zip with their indexs
+       // construct indexed prefix & suffix for each place
+       // prefix(n) + top(n) + suffix(n)
+       // prefix(len - n) + bottom + suffix(len -n)
+       // the above two will write the two rows
+       // all other rows add a value to the end of the prefix & start of the suffix
+
+       def asMatrix(rings: Seq[MatrixRing]): Seq[String] = {
+         val sorted = rings.sortBy(- _.left.size)
+         val len = sorted.head.left.size
+         var prefixes = Map[Int, String]()
+         var suffixes = Map[Int, String]()
+         val matrix: Seq[StringBuilder] = Seq.fill(len + 1)(StringBuilder.newBuilder)
+
+         sorted.zipWithIndex.foreach{p =>
+           val (m, i) = p
+           m.left.reverse.zipWithIndex.foreach(x => prefixes =  prefixes.updated(x._2 + i + 1, prefixes.get(x._2 + i + 1).fold(x._1.toString)(s => s + " " + x._1.toString)))
+           m.right.zipWithIndex.foreach(x => suffixes = suffixes.updated(x._2 + i -1, suffixes.get(x._2 + i - 1).fold(x._1.toString)(s => x._1.toString + " " + s )))
+
+           matrix(i).append(s"${prefixes.getOrElse(i, "")} ${m.top.mkString(" ")}${if(i == 0) "" else " "}${suffixes.getOrElse(i, "")}")
+           matrix(len - i).append(s"${prefixes.getOrElse(len - i, "")} ${m.top.mkString(" ")}${if(i == len -1) "" else " "}${suffixes.getOrElse(len - i, "")}")
+         }
+
+         matrix.map(_.toString())
+       }
+
+       def reqdRotations(matrixRing: MatrixRing, r: Int) =
+         r % ((matrixRing.top.size * 2) + (matrixRing.left.size * 2))
+
+       def rotateNTimes(matrixRing: MatrixRing, n: Int): MatrixRing =
+        if (n == 0) matrixRing
+        else rotateNTimes(matrixRing.rotate, n -1)
+
+       def main(args: Array[String]): Unit = {
+         val lines = io.Source.stdin.getLines().filter(_.length > 0).toList
+         val Array(m, n, r) = lines.head.split(" ").map(_.toInt)
+         val matrix: Matrix = lines.tail.map(_.split(" ").map(_.toInt).toSeq)
+
+         val topBottom = matrix.indices zip matrix.indices.reverse
+         val leftRight = matrix.head.indices zip matrix.head.indices.reverse
+         val ringIndexes = topBottom zip leftRight
+
+         val rings = ringIndexes.map{ ix =>
+           val ((t, b), (l, r)) = ix
+           MatrixRing(
+             matrix(t).drop(l).dropRight(l + 1),
+             matrix.foldLeft(Seq[Int]())((acc, ls) => acc :+ ls(l)).reverse.drop(t).dropRight(t + 1),
+             matrix(b).reverse.drop(l).dropRight(l + 1),
+             matrix.foldLeft(Seq[Int]())((acc, ls) => acc :+ ls(r)).drop(t).dropRight(t + 1)
+           )
+         }.filter(_.top.nonEmpty)
+
+         val rotated = rings.map(m => rotateNTimes(m, reqdRotations(m, r)))
+
+         println(rings)
+         println(rotated)
+       }
+     }
+   }
+
+}
+
 object Hacker {
 
   object Helpers{
