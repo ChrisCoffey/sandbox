@@ -139,6 +139,15 @@ object Algorithms {
          matrix.map(_.toString())
        }
 
+       //for each ring, join it together by using a function that adds stuff to the front or back of a string
+       def join(rings: Seq[MatrixRing]): Matrix = {
+         val sorted = rings.sortBy( - _.left.size)
+         type M = Either[Seq[Int], (Seq[Int], Seq[Int])]
+         sorted.foldLeft(Seq[M]){ (acc, )
+
+         }
+       }
+
        def reqdRotations(matrixRing: MatrixRing, r: Int) =
          r % ((matrixRing.top.size * 2) + (matrixRing.left.size * 2))
 
@@ -172,6 +181,105 @@ object Algorithms {
        }
      }
    }
+
+  object Strings {
+    object FunnyString {
+      def main (args: Array[String]): Unit ={
+        val strs = io.Source.stdin.getLines().filter(_.length > 0).drop(1).toList
+        val res = strs.map{s =>
+          (s zip s.reverse).foldLeft((true, s.head, s.last)){ (acc, c) =>
+              if(!acc._1) acc
+              else {
+                val b = math.abs(c._1 - acc._2) == math.abs(c._2.toInt - acc._3)
+                (b, c._1, c._2)
+              }
+            } match {
+            case (true, _, _) => "Funny"
+            case _ => "Not Funny"
+          }
+
+        }
+
+        println(res.mkString("\n"))
+      }
+    }
+
+    object Pangrams {
+      def main (args: Array[String]): Unit = {
+        val str = io.Source.stdin.getLines().filter(_.length > 0).toList.head.toLowerCase.replace(" ", "")
+
+        val r = if (str.distinct.size == 26) "pangram" else "not pangram"
+        println(r)
+      }
+    }
+
+    object AlternatingCharacters {
+      def main (args: Array[String]): Unit = {
+        val lines = io.Source.stdin.getLines().filter(_.length > 0).toList.drop(1)
+
+        val r = lines.map(l =>
+          l.tail.foldLeft((0, l.head))((acc, c) =>
+            if(acc._2 == c) (acc._1 + 1, c)
+            else (acc._1, c)
+          )._1
+        )
+
+        println(r.mkString("\n"))
+      }
+    }
+
+    object GameOfThronesOne {
+      def main(args: Array[String]): Unit ={
+        val line = io.Source.stdin.getLines().filter(_.length > 0).toList.head
+        if (line.toList.groupBy(c => c).filter(_._2.size % 2 == 1).size <= 1) println("YES")
+        else println("NO")
+
+      }
+    }
+
+    object Gemstones {
+      def main(args: Array[String]): Unit = {
+        val lines = io.Source.stdin.getLines().filter(_.length > 0).toList.drop(1)
+
+        println( lines.tail.foldLeft(lines.head.toSet)((acc, s) => s.toSet intersect acc).size )
+      }
+    }
+
+    object MakeItAnagram {
+      def main (args: Array[String]): Unit = {
+        val lines = io.Source.stdin.getLines().filter(_.length > 0).toList
+        lines.map(s => s.toList.groupBy(c => c).map(t => (t._1, t._2.size))) match {
+          case a :: b :: Nil =>
+            val r = a.foldLeft(b){(acc, kvp) =>
+              acc.get(kvp._1).fold(acc + kvp)(v => acc.updated(kvp._1, math.abs(v - kvp._2)))
+            }.values.sum
+            println(r)
+          case _ => println("bleh")
+        }
+
+      }
+    }
+
+    object Anagram {
+      def main (args: Array[String]): Unit = {
+        val lines = io.Source.stdin.getLines.filter(_.length > 0).toList.drop(1)
+        val r = lines.map{ s =>
+            s.length match {
+              case x if x %2 == 1 => -1
+              case y =>
+                val a = s.take(y / 2).sorted
+                val b = s.takeRight(y / 2).sorted
+                a.toList.foldLeft((0, b)){ (acc, c) =>
+                    if(c)
+                }
+            }
+        }
+        println(r.mkString("\n"))
+
+      }
+    }
+
+  }
 
 }
 
