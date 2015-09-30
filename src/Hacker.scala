@@ -260,6 +260,7 @@ object Algorithms {
       }
     }
 
+    //note solve this
     object Anagram {
       def main (args: Array[String]): Unit = {
         val lines = io.Source.stdin.getLines.filter(_.length > 0).toList.drop(1)
@@ -267,11 +268,10 @@ object Algorithms {
             s.length match {
               case x if x %2 == 1 => -1
               case y =>
-                val a = s.take(y / 2).sorted
-                val b = s.takeRight(y / 2).sorted
-                a.toList.foldLeft((0, b)){ (acc, c) =>
-                    if(c)
-                }
+                val a = s.take(y / 2).groupBy(c => c).map(t => (t._1, t._2.length))
+                val b = s.takeRight(y / 2).groupBy(c => c).map(t => (t._1, t._2.length))
+
+                b.foldLeft(0)((i, pair) => a.get(pair._1).fold(pair._2)(x => math.max(pair._2 - x, 0)) + i)
             }
         }
         println(r.mkString("\n"))
@@ -279,6 +279,57 @@ object Algorithms {
       }
     }
 
+  }
+
+  object Sorting {
+    object Tutorial {
+      def main (args: Array[String]): Unit ={
+        val lines = io.Source.stdin.getLines().filter(_.length > 0).toList
+        val n = lines.head.toInt
+        val ls = lines.last.split(" ").map(_.toInt)
+
+        println(ls.indexOf(n))
+      }
+    }
+
+    object InsertionSort1 {
+      def main(args: Array[String]): Unit = {
+        val lines = io.Source.stdin.getLines().filter(_.length > 0).toList.drop(1)
+        val arr = lines.head.split(" ").map(_.toInt)
+        val elem = arr.last
+
+        var n = arr.indices.last -1
+        while(n > -1 && elem <= arr(n)) {
+          arr(n +1) = arr(n)
+          n -= 1
+          println(arr.mkString(" "))
+        }
+        arr(n +1) = elem
+        println(arr.mkString(" "))
+      }
+    }
+
+    object InsertionSort2 {
+      def main(args: Array[String]): Unit = {
+        val lines = io.Source.stdin.getLines().filter(_.length > 0).toList.drop(1)
+        val arr = lines.head.split(" ").map(_.toInt).toList
+
+        def insert(ls: List[Int], x: Int) =
+          ls.span(i => i < x) match {
+            case (lt, gt) => lt ::: i :: gt
+          }
+
+        arr.foldLeft(arr){(acc, i) =>
+            val ls = insert(acc.span(_ < i) match { case (l, r) => l ::: r.tail }, i)
+            println(ls.mkString(" "))
+            ls
+        }
+      }
+    }
+
+    object RunningTime {
+
+    }
   }
 
 }
