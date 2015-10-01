@@ -260,7 +260,6 @@ object Algorithms {
       }
     }
 
-    //note solve this
     object Anagram {
       def main (args: Array[String]): Unit = {
         val lines = io.Source.stdin.getLines.filter(_.length > 0).toList.drop(1)
@@ -275,6 +274,44 @@ object Algorithms {
             }
         }
         println(r.mkString("\n"))
+
+      }
+    }
+
+    object TwoStrings {
+      def main(args: Array[String]): Unit ={
+        val lines = io.Source.stdin.getLines.filter(_.length > 0).toList.drop(1)
+        val cases = lines.sliding(2, 2).toList
+
+        val rs = cases map { ls =>
+          val List(a, b) = ls
+
+          if((a.toSet intersect b.toSet).nonEmpty) "YES"
+          else "NO"
+        }
+
+        println(rs.mkString("\n"))
+      }
+    }
+
+    object BiggerIsGreater {
+      def main (args: Array[String]): Unit = {
+        val lines = io.Source.stdin.getLines.filter(_.length > 0).toList.drop(1)
+
+        val res = lines map { line =>
+           if(line.toList.distinct.size == 1) "no answer"
+            else {
+            val str = line.foldRight((List[Char](), false)){(c, acc) =>
+                if(acc._2) acc
+                else if(acc._1.isEmpty) (c :: Nil, false)
+                else if(c < acc._1.head) (acc._1.head :: c :: acc._1.tail, true)
+                else (c :: acc._1, false)
+            }._1.mkString
+             line.dropRight(str.length) + str
+           }
+        }
+
+        println(res.mkString("\n"))
 
       }
     }
@@ -316,7 +353,10 @@ object Algorithms {
 
         def insert(ls: List[Int], x: Int) =
           ls.span(i => i < x) match {
-            case (lt, gt) => lt ::: i :: gt
+            case (lt, gt) =>
+              println(lt)
+              println(gt)
+              lt ::: i :: gt
           }
 
         arr.foldLeft(arr){(acc, i) =>
@@ -328,7 +368,26 @@ object Algorithms {
     }
 
     object RunningTime {
+      def main (args: Array[String]): Unit = {
+        val lines = io.Source.stdin.getLines().filter(_.length > 0).toList.drop(1)
+        var arr = lines.head.split(" ").map(_.toInt).toList
+        var moves = 0
 
+        def insert(ls: List[Int], x: Int) = {
+          val (lt, gt) = ls.span(_ < x)
+          (lt ::: (x :: gt) , lt.indices.lastOption.fold(0)(i => i + 1) )
+        }
+
+        var i = 0
+        arr.foldLeft(List[Int]()){(acc, a) =>
+            val (newArr, idx) = insert(acc, a)
+            moves += math.abs(i - idx)
+            i += 1
+            newArr
+        }
+
+        println(moves)
+      }
     }
   }
 
